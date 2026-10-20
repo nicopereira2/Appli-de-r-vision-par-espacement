@@ -69,11 +69,26 @@ export function merge(local, remote) {
   const newer = (x, y) => {
     const rx = x.reps || 0, ry = y.reps || 0;
     if (ry !== rx) return ry > rx ? y : x;
-    return (y.last || '') > (x.last || '') ? y : x;
+    if ((y.last || '') !== (x.last || '')) return (y.last || '') > (x.last || '') ? y : x;
+    return (y.vupd || '') > (x.vupd || '') ? y : x;
   };
+  // Variantes : on garde la liste la plus récente, même si l'autre appareil a plus de révisions.
+  const pickCard = (x, y) => { const w = newer(x, y), o = w === x ? y : x; return (o.vupd || '') > (w.vupd || '') ? { ...w, vars: o.vars, vRot: o.vRot, lastVar: o.lastVar, vupd: o.vupd } : w; };
   const courses = byId(a.courses, b.courses, x => x).filter(c => !deleted[c.id]);
-  const cards = byId(a.cards, b.cards, newer).filter(c => !deleted[c.courseId] && !deleted[c.id]);
+  const cards = byId(a.cards, b.cards, pickCard).filter(c => !deleted[c.courseId] && !deleted[c.id]);
+  const upd = (x, y) => ((y.upd || '') > (x.upd || '') ? y : x);
+  const errors = byId(a.errors, b.errors, upd).filter(e => !deleted[e.id]);
+  const exos = byId(a.exos, b.exos, x => x).filter(e => !deleted[e.id]);
+  const annales = byId(a.annales, b.annales, x => x).filter(e => !deleted[e.id]);
+  const weekChecks = { ...(b.weekChecks || {}) };
+  Object.entries(a.weekChecks || {}).forEach(([k, v]) => { weekChecks[k] = { ...(weekChecks[k] || {}), ...v }; });
   const log = { ...(b.log || {}) };
   Object.entries(a.log || {}).forEach(([k, v]) => { log[k] = Math.max(log[k] || 0, v); });
-  return { ...b, ...a, courses, cards, log, deleted, settings: { ...(b.settings || {}), ...(a.settings || {}) } };
+  const revWeekDone = { ...(b.revWeekDone || {}), ...(a.revWeekDone || {}) };
+  let revWeek = a.revWeek !== undefined ? a.revWeek : b.revWeek;
+  if (a.revWeek && b.revWeek && a.revWeek.id === b.revWeek.id) {
+    const dn = {}; (b.revWeek.days || []).forEach(d => (d.blocks || []).forEach(x => { if (x.done) dn[x.id] = x; }));
+    revWeek = { ...a.revWeek, days: (a.revWeek.days || []).map(d => ({ ...d, blocks: (d.blocks || []).map(x => (!x.done && dn[x.id] ? { ...x, done: true, doneAt: dn[x.id].doneAt } : x)) })) };
+  }
+  return { ...b, ...a, courses, cards, errors, exos, annales, weekChecks, log, deleted, revWeek, revWeekDone, settings: { ...(b.settings || {}), ...(a.settings || {}) } };
 }

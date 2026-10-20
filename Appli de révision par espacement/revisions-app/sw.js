@@ -1,9 +1,9 @@
-const CACHE = 'revisions-v6';
+const CACHE = 'revisions-v11';
 const SHELL = [
   './', './index.html', './Revisions.dc.html', './support.js', './course-import.js', './local-qgen.js', './cloud.js', './config.js',
-  './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
-  './_ds/modernist-d64977b1-82be-4a06-bb24-112bd60a1c1d/styles.css',
-  './_ds/modernist-d64977b1-82be-4a06-bb24-112bd60a1c1d/_ds_bundle.js'
+  './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './logo-mark.png', './logo-mark-dark.png',
+  './ds/styles.css',
+  './ds/ds_bundle.js'
 ];
 
 self.addEventListener('install', e => {
@@ -19,7 +19,7 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   // Never cache account / database / AI traffic.
-  if (url.hostname.endsWith('supabase.co') || url.hostname.endsWith('supabase.in') || url.hostname === 'api.anthropic.com' || url.hostname === 'generativelanguage.googleapis.com' || url.hostname === 'api.groq.com' || url.hostname.endsWith('huggingface.co') || url.hostname.endsWith('hf.co') || url.hostname === 'raw.githubusercontent.com') return;
+  if (url.hostname.endsWith('supabase.co') || url.hostname.endsWith('supabase.in') || url.hostname === 'api.anthropic.com' || url.hostname === 'generativelanguage.googleapis.com' || url.hostname === 'api.groq.com' || url.hostname.endsWith('huggingface.co') || url.hostname.endsWith('hf.co') || url.hostname === 'raw.githubusercontent.com' || url.hostname === 'data.education.gouv.fr') return;
   if (url.origin === location.origin) {
     // App files: network first so updates land immediately; cache when offline.
     e.respondWith(fetch(req).then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return r; })
